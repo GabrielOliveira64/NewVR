@@ -45,6 +45,7 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
     private val prefs by lazy { getSharedPreferences("portal_vr", Context.MODE_PRIVATE) }
     private var distortion = 0.18f
     private var camFlip = 1
+    private var shownRotInfo = false
 
     private val permLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
@@ -88,7 +89,7 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
             }
         }
         renderer.distortion = distortion
-        camFlip = prefs.getInt("flip", 1)
+        camFlip = prefs.getInt("quarter", 1)
         renderer.camFlip = camFlip
 
         glView = GLSurfaceView(this)
@@ -156,6 +157,10 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
         val exec = ContextCompat.getMainExecutor(this)
         request.setTransformationInfoListener(exec) { info ->
             renderer.camRotation180 = info.rotationDegrees == 180
+            if (!shownRotInfo) {
+                shownRotInfo = true
+                Toast.makeText(this, "Rotação informada pelo CameraX: " + info.rotationDegrees, Toast.LENGTH_LONG).show()
+            }
         }
         request.provideSurface(surface, exec) { surface.release() }
     }
@@ -226,7 +231,7 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
         if (event.actionMasked == MotionEvent.ACTION_UP) {
             camFlip = (camFlip + 1) % 4
             renderer.camFlip = camFlip
-            prefs.edit().putInt("flip", camFlip).apply()
+            prefs.edit().putInt("quarter", camFlip).apply()
             Toast.makeText(this, "Orientação da câmera: " + (camFlip + 1) + " de 4", Toast.LENGTH_SHORT).show()
         }
         return true
