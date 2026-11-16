@@ -11,6 +11,7 @@ import android.opengl.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.Surface
 import android.view.WindowManager
 import android.widget.Toast
@@ -43,6 +44,7 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
     private val outR = FloatArray(9)
     private val prefs by lazy { getSharedPreferences("portal_vr", Context.MODE_PRIVATE) }
     private var distortion = 0.18f
+    private var camFlip = 1
 
     private val permLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
@@ -86,6 +88,8 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
             }
         }
         renderer.distortion = distortion
+        camFlip = prefs.getInt("flip", 1)
+        renderer.camFlip = camFlip
 
         glView = GLSurfaceView(this)
         glView.setEGLContextClientVersion(2)
@@ -215,6 +219,17 @@ class PortalActivity : ComponentActivity(), SensorEventListener, HandTracker.Lis
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    // Tocar na tela troca a orientação da câmera (1 a 4) até ficar certa
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_UP) {
+            camFlip = (camFlip + 1) % 4
+            renderer.camFlip = camFlip
+            prefs.edit().putInt("flip", camFlip).apply()
+            Toast.makeText(this, "Orientação da câmera: " + (camFlip + 1) + " de 4", Toast.LENGTH_SHORT).show()
+        }
+        return true
     }
 
     // ---- gestos (chamados na thread de análise) ----

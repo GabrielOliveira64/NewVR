@@ -71,6 +71,7 @@ uniform sampler2D uWorld;
 uniform mat4 uTexMat;
 uniform vec2 uCamK;
 uniform float uCamRot;
+uniform vec2 uFlip;
 uniform float uAspect;
 uniform float uBgMode;
 uniform float uPortalOn;
@@ -92,6 +93,8 @@ const float PI = 3.14159265;
 vec3 camColor(vec2 s) {
     vec2 c = vec2(0.5) + (s - vec2(0.5)) * uCamK;
     if (uCamRot > 0.5) c = vec2(1.0) - c;
+    if (uFlip.x > 0.5) c.x = 1.0 - c.x;
+    if (uFlip.y > 0.5) c.y = 1.0 - c.y;
     vec2 t = vec2(c.x, 1.0 - c.y);
     vec2 tc = (uTexMat * vec4(t, 0.0, 1.0)).xy;
     return texture2D(uCam, tc).rgb;
@@ -194,6 +197,7 @@ void main() {
 
     @Volatile var surfaceTexture: SurfaceTexture? = null
     @Volatile var camRotation180 = false
+    @Volatile var camFlip = 1
     @Volatile var camAspect = 4f / 3f
     @Volatile var distortion = 0.18f
     @Volatile var rotM = floatArrayOf(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f)
@@ -404,6 +408,11 @@ void main() {
         GLES20.glUniformMatrix4fv(u("uTexMat"), 1, false, texMat, 0)
         GLES20.glUniform2f(u("uCamK"), kx, ky)
         GLES20.glUniform1f(u("uCamRot"), if (camRotation180) 1f else 0f)
+        GLES20.glUniform2f(
+            u("uFlip"),
+            if (camFlip == 1 || camFlip == 3) 1f else 0f,
+            if (camFlip == 1 || camFlip == 2) 1f else 0f
+        )
         GLES20.glUniform1f(u("uAspect"), aspect)
         GLES20.glUniform1f(u("uBgMode"), bgMode)
         GLES20.glUniform1f(u("uPortalOn"), if (portalOn) 1f else 0f)
